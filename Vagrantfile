@@ -29,7 +29,7 @@ Vagrant.configure(2) do |config|
   end
   config.vm.define "main01" do |main01|
     main01.vm.box = "generic/ubuntu2204"
-    main01.vm.hostname = "harbor01"
+    main01.vm.hostname = "main01"
     main01.vm.provider "libvirt" do |libvirt|
       libvirt.driver = "kvm"
       libvirt.memory = "4096"
