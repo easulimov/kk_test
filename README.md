@@ -46,7 +46,7 @@ GRANT ALL PRIVILEGES ON DATABASE grafana TO grafana;
 ```
 
 
-Настройка удаленного подключения к postgresql (добавляем строчки в файл pghba.conf):
+Настройка удаленного подключения к postgresql (добавляем строчки в файл /etc/postgresql/14/main/pg_hba.conf):
 
 ```
 # Разрешение подключения пользователю keycloak к базе данных keycloak с любого IP по паролю
@@ -65,5 +65,5 @@ host grafana grafana 0.0.0.0/0 md5
 
 
 ```bash
-sudo systemctl restart postgresql
+sudo systemctl restart postgresql@14-main.service
 ```
