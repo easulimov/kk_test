@@ -371,6 +371,7 @@ sudo chmod 644 /var/log/keycloak/keycloak.log
 
 #### Запуск keycloak
 
+
 Переходим в каталог /opt/keycloak/keycloak-25.0.1/bin/
 ```bash
 cd /opt/keycloak/keycloak-25.0.1/bin/
