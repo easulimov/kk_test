@@ -348,7 +348,7 @@ https-certificate-key-file=/opt/keycloak/ssl/sea.local.key
 #spi-sticky-session-encoder-infinispan-should-attach-route=false
 
 # Hostname for the Keycloak server.
-hostname=kk01.sea.local:8443
+hostname=kk01.sea.local
 
 # Logging
 log=console,file
@@ -397,6 +397,12 @@ export KEYCLOAK_ADMIN_PASSWORD=admin
 sudo ./kc.sh build
 ```
 
+После выполнения скрипта можно посмотреть конифгурацию файла:
+```bash
+./kc.sh show-config
+```
+
+
 Первый запуск и импорт логин-пароль админа в базу. После успешного запуска останавливаем процесс (Ctrl+C)
 ```bash
 sudo -E ./kc.sh start
@@ -411,7 +417,7 @@ sudo ./kc.sh start --hostname=kk01.sea.local
 
 Создаем файл `/etc/systemd/system/keycloak.service`
 ```bash
-cat > /etc/systemd/system/keycloak.service <<-EOF
+sudo cat > /etc/systemd/system/keycloak.service <<-EOF
 [Unit]
 Description=Keycloak Systemd Service Unit
 After=network.target
