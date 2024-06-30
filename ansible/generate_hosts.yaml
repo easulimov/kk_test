@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: "Update /etc/hosts"
+      become: true
+      blockinfile:
+        dest: /etc/hosts
+        block: |
+          {% for host in groups['all'] %}
+          {{ hostvars[host].ansible_host }} {{ hostvars[host].inventory_hostname_short }} {{ hostvars[host].inventory_hostname }}
+          {% endfor %}
+        state: present
+        create: yes
+        backup: yes
+        marker: "# Ansible inventory hosts {mark}"

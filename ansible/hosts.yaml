@@ -1,0 +1,19 @@
+---
+all:
+  children:
+    keycloak:
+      hosts:
+        kk01.sea.local:
+          ansible_host: 192.168.122.232
+          ansible_port: 22
+    grafana:
+      hosts:
+        grafana01.sea.local:
+          ansible_host: 192.168.122.101
+
+          ansible_port: 22
+    main:
+      hosts:
+        main01.sea.local:
+          ansible_host: 192.168.122.116
+          ansible_port: 22

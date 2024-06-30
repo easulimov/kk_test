@@ -1,5 +1,82 @@
 # Настройки хостов
 
+## Подготовка ssl сертификатов
+
+
+#### Подготовка корневого сертификата
+
+Генерация закрытого ключа 
+
+```bash
+openssl genrsa -out ca.key 4096
+```
+
+Генерация корневого сертификата
+
+
+```bash
+openssl req -x509 -new -nodes -sha512 -days 3650 \
+ -subj "/C=RU/ST=Moscow/L=Moscow/O=SEA/OU=IT/CN=ROOT CA SEA" \
+ -key ca.key \
+ -out ca.crt
+```
+
+
+#### Подготовка серверного сертификата
+
+
+Генерация закрытого ключа
+
+
+```bash
+openssl genrsa -out sea.local.key 4096
+```
+
+Генерация запроса на подпись сертификата (CSR)
+
+
+```bash
+openssl req -sha512 -new \
+    -subj "/C=RU/ST=Moscow/L=Moscow/O=SEA/OU=IT/CN=sea.local" \
+    -key sea.local.key \
+    -out sea.local.csr
+```
+
+Генерация файла расширения x509 v3
+
+
+```bash
+cat > v3.ext <<-EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1=*.sea.local
+DNS.2=kk01.sea.local
+DNS.3=grafana01.sea.local
+DNS.4=main01.sea.local
+DNS.5=postgresql.sea.local
+DNS.6=nginx01.sea.local
+DNS.7=lb.sea.local
+DNS.8=harbor.sea.local
+DNS.9=keycloak.sea.local
+DNS.10=grafana.sea.local
+EOF
+```
+
+Генерация серверного сертификата
+
+```bash
+openssl x509 -req -sha512 -days 365 \
+    -extfile v3.ext \
+    -CA ca.crt -CAkey ca.key -CAcreateserial \
+    -in sea.local.csr \
+    -out sea.local.crt
+```
+
 ## main01 (postgresql14, nginx)
 
 
@@ -32,7 +109,7 @@ CREATE USER keycloak WITH PASSWORD '123';
 ```
 
 ```
-CREATE DATABASE keycloak;
+CREATE DATABASE keycloak owner keycloak;
 GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 ```
 
@@ -41,7 +118,7 @@ CREATE USER grafana WITH PASSWORD '123';
 ```
 
 ```
-CREATE DATABASE grafana;
+CREATE DATABASE grafana owner grafana;
 GRANT ALL PRIVILEGES ON DATABASE grafana TO grafana;
 ```
 
@@ -154,4 +231,42 @@ sudo apt install postgresql-client-14
 
 ```bash
 psql -h 192.168.122.116 -U grafana -d grafana
+```
+
+## keycloak01
+
+#### Установка и первоначальная настройка keycloak
+
+Добавление системного пользователя с именем keycloak
+
+```bash
+sudo useradd -m -d /var/lib/keycloak -s /sbin/nologin -r keycloak
+```
+
+Установка OpenJDK21
+
+```bash
+sudo apt -y install openjdk-21-jdk
+```
+
+Подготавливаем директорию и скачиваем keycloak (https://github.com/keycloak/keycloak/releases)
+
+```bash
+sudo mkdir -p /opt/keycloak
+```
+
+```bash
+sudo wget https://github.com/keycloak/keycloak/releases/download/25.0.1/keycloak-25.0.1.zip -P /opt/keycloak
+```
+
+```bash
+sudo unzip /opt/keycloak/keycloak-25.0.1.zip -d /opt/keycloak
+```
+
+```bash
+sudo chown -R keycloak:keycloak /opt/keycloak/
+```
+
+```bash
+sudo chmod o+x /opt/keycloak/keycloak-25.0.1/bin/
 ```
