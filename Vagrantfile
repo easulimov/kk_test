@@ -20,20 +20,20 @@ Vagrant.configure(2) do |config|
     grafana01.vm.hostname = "grafana01"
     grafana01.vm.provider "libvirt" do |libvirt|
       libvirt.driver = "kvm"
-      libvirt.memory = "2048"
-      libvirt.cpus = "2"
+      libvirt.memory = "1024"
+      libvirt.cpus = "1"
       libvirt.management_network_name = "default"
       libvirt.management_network_address = "192.168.122.0/24"
       libvirt.management_network_mode = "nat"
     end
   end
-  config.vm.define "harbor01" do |harbor01|
-    harbor01.vm.box = "generic/ubuntu2204"
-    harbor01.vm.hostname = "harbor01"
-    harbor01.vm.provider "libvirt" do |libvirt|
+  config.vm.define "main01" do |main01|
+    main01.vm.box = "generic/ubuntu2204"
+    main01.vm.hostname = "harbor01"
+    main01.vm.provider "libvirt" do |libvirt|
       libvirt.driver = "kvm"
       libvirt.memory = "4096"
-      libvirt.cpus = "2"
+      libvirt.cpus = "4"
       libvirt.management_network_name = "default"
       libvirt.management_network_address = "192.168.122.0/24"
       libvirt.management_network_mode = "nat"
