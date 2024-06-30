@@ -235,7 +235,7 @@ psql -h 192.168.122.116 -U grafana -d grafana
 
 ## keycloak01
 
-#### Установка и первоначальная настройка keycloak
+#### Установка keycloak
 
 Добавление системного пользователя с именем keycloak
 
@@ -256,17 +256,188 @@ sudo mkdir -p /opt/keycloak
 ```
 
 ```bash
+sudo mkdir -p /opt/keycloak/ssl
+```
+> После создания папки `/opt/keycloak/ssl` - в нее требуется скопировать ранее созданные ca.crt, sea.local.crt, sea.local.key
+
+> Создайте файл цепочки сертификатов
+
+
+```
+sudo cat sea.local.crt ca.crt > cachain.sea.local
+```
+
+Скачивание архива c keycloak 25.0.1
+```bash
 sudo wget https://github.com/keycloak/keycloak/releases/download/25.0.1/keycloak-25.0.1.zip -P /opt/keycloak
 ```
 
+
+Распаковка архива
 ```bash
 sudo unzip /opt/keycloak/keycloak-25.0.1.zip -d /opt/keycloak
 ```
 
+Создание папки /opt/keycloak/
 ```bash
 sudo chown -R keycloak:keycloak /opt/keycloak/
 ```
 
+
 ```bash
 sudo chmod o+x /opt/keycloak/keycloak-25.0.1/bin/
+```
+
+#### Настройка keycloak
+
+Редактируем настройки файла `/opt/keycloak/keycloak-25.0.1/conf/keycloak.conf`
+```bash
+sudo vim /opt/keycloak/keycloak-25.0.1/conf/keycloak.conf
+```
+
+
+Создадим папку для логов keycloak
+```bash
+sudo mkdir -p /var/log/keycloak/
+```
+
+Создадим файл для логов keycloak
+```bash
+sudo touch /var/log/keycloak/keycloak.log
+```
+
+Содержимое файла:
+```ini
+# Basic settings for running in production. Change accordingly before deploying the server.
+
+# Database
+
+# The database vendor.
+db=postgres
+
+# The username of the database user.
+db-username=keycloak
+
+# The password of the database user.
+db-password=123
+
+# The full database JDBC URL. If not provided, a default URL is set based on the selected database vendor.
+db-url=jdbc:postgresql://main01.sea.local:5432/keycloak
+
+# Observability
+
+# If the server should expose healthcheck endpoints.
+#health-enabled=true
+
+# If the server should expose metrics endpoints.
+metrics-enabled=true
+
+# HTTP
+
+# The file path to a server certificate or certificate chain in PEM format.
+https-certificate-file=/opt/keycloak/ssl/cachain.sea.local.crt
+
+
+# The file path to a private key in PEM format.
+https-certificate-key-file=/opt/keycloak/ssl/sea.local.key
+
+# The proxy address forwarding mode if the server is behind a reverse proxy.
+#proxy=reencrypt
+
+# Do not attach route to cookies and rely on the session affinity capabilities from reverse proxy
+#spi-sticky-session-encoder-infinispan-should-attach-route=false
+
+# Hostname for the Keycloak server.
+hostname=kk01.sea.local:8443
+
+# Logging
+log=console,file
+log-file=/var/log/keycloak/keycloak.log
+```
+
+Изменение владельца файла /var/log/keycloak/keycloak.log
+```bash
+sudo chown keycloak:keycloak /var/log/keycloak/keycloak.log
+```
+
+
+Изменение прав доступа к файлу /var/log/keycloak/keycloak.log
+```bash
+sudo chmod 644 /var/log/keycloak/keycloak.log
+```
+
+
+> Внимание! Убедитесь, что на файерволе открыт TCP порт 8443
+
+#### Запуск keycloak
+
+Переходим в каталог /opt/keycloak/keycloak-25.0.1/bin/
+```bash
+cd /opt/keycloak/keycloak-25.0.1/bin/
+```
+
+
+Запускаем keycloak в режиме developer mode
+```bash
+sudo ./kc.sh start-dev
+```
+
+Задаем логин / пароль админа
+```bash
+export KEYCLOAK_ADMIN=admin
+export KEYCLOAK_ADMIN_PASSWORD=admin
+```
+
+
+Создаем конфиг для прода
+```bash
+sudo ./kc.sh build
+```
+
+Первый запуск и импорт логин-пароль админа в базу. После успешного запуска останавливаем процесс (Ctrl+C)
+```bash
+sudo -E ./kc.sh start
+```
+
+Запускаем Keycloak
+```bash
+sudo ./kc.sh start --hostname=kk01.sea.local
+```
+
+#### Создание Systemd Unit
+
+Создаем файл `/etc/systemd/system/keycloak.service`
+```bash
+cat > /etc/systemd/system/keycloak.service <<-EOF
+[Unit]
+Description=Keycloak Systemd Service Unit
+After=network.target
+
+[Service]
+Type=idle
+User=keycloak
+Group=keycloak
+SuccessExitStatus=0 143
+ExecStart=!/opt/keycloak/keycloak-25.0.1/bin/kc.sh start --hostname=kk01.sea.local
+TimeoutStartSec=600
+TimeoutStopSec=600
+
+[Install]
+WantedBy=multi-user.target
+EOF
+``` 
+
+Обновляем информацию о юнитах systemd
+```bash
+sudo systemctl daemon-reload
+```
+
+Запускаем `keycloak.service` и добавляем его в автозагрузку
+```bash
+sudo systemctl enable --now keycloak
+```
+
+Проверяем статуч
+```bash
+sudo systemctl status keycloak
 ```
