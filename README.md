@@ -369,6 +369,8 @@ sudo chmod 644 /var/log/keycloak/keycloak.log
 
 > Внимание! Убедитесь, что на файерволе открыт TCP порт 8443
 
+
+
 #### Запуск keycloak
 
 
